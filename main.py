@@ -55,8 +55,15 @@ def main() -> None:
     assert "\n" not in text, "entry must be a single line"
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
     os.makedirs(out_dir, exist_ok=True)
-    with open(os.path.join(out_dir, "entry.txt"), "w", encoding="utf-8", newline="") as f:
+    out_path = os.path.join(out_dir, "entry.txt")
+    with open(out_path, "w", encoding="utf-8", newline="") as f:
         f.write(text)
+    # Read-back: the file on disk must be byte-identical to the line we
+    # meant to write. A write that silently changed anything (newline
+    # translation, an encoding fallback) fails loudly here instead of
+    # shipping a different entry from the one that was gated above.
+    with open(out_path, "rb") as f:
+        assert f.read() == text.encode("utf-8"), "entry.txt differs from LINE"
 
 
 if __name__ == "__main__":
